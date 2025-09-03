@@ -1,17 +1,25 @@
 import React, { useContext } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../../App';
 
 const ProfileScreen = () => {
    const { signOut } = useContext(AuthContext);
-   const [userData, setUserData] = React.useState({ name: 'Usuário', username: '' });
+   const navigation = useNavigation();
+   const [userData, setUserData] = React.useState({ 
+     nomeCompleto: 'Usuário', 
+     username: '', 
+     email: '',
+     telefone: '',
+     tipoUsuario: 'USUARIO'
+   });
 
    React.useEffect(() => {
       const getUserData = async () => {
          try {
-            const userDataString = await AsyncStorage.getItem('user_data');
+            const userDataString = await AsyncStorage.getItem('userData');
             if (userDataString) {
                const userData = JSON.parse(userDataString);
                setUserData(userData);
@@ -25,17 +33,30 @@ const ProfileScreen = () => {
    }, []);
 
    const handleLogout = () => {
-      signOut();
+      Alert.alert(
+        'Confirmar logout',
+        'Tem certeza que deseja sair?',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Sair', onPress: () => signOut() }
+        ]
+      );
    };
 
+   const handleUserManagement = () => {
+      navigation.navigate('UserManagement');
+   };
+
+   const isAdmin = userData.tipoUsuario === 'ADMIN';
+
    return (
-      <View style={styles.container}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
          <View style={styles.profileHeader}>
             <View style={styles.avatarContainer}>
-               <Text style={styles.avatarText}>{userData.name.charAt(0)}</Text>
+               <Text style={styles.avatarText}>{userData.nomeCompleto.charAt(0)}</Text>
             </View>
-            <Text style={styles.userName}>{userData.name}</Text>
-            <Text style={styles.userRole}>Administrador</Text>
+            <Text style={styles.userName}>{userData.nomeCompleto}</Text>
+            <Text style={styles.userRole}>{userData.tipoUsuario === 'ADMIN' ? 'Administrador' : 'Usuário'}</Text>
          </View>
 
          <View style={styles.section}>
@@ -45,25 +66,38 @@ const ProfileScreen = () => {
                   <Ionicons name="person" size={20} color="#3498db" />
                   <View style={styles.infoContent}>
                      <Text style={styles.infoLabel}>Nome de Usuário</Text>
-                     <Text style={styles.infoValue}>{userData.username || 'admin'}</Text>
+                     <Text style={styles.infoValue}>{userData.username}</Text>
                   </View>
                </View>
                <View style={styles.infoItem}>
                   <Ionicons name="mail" size={20} color="#3498db" />
                   <View style={styles.infoContent}>
                      <Text style={styles.infoLabel}>Email</Text>
-                     <Text style={styles.infoValue}>admin@logitrack.com</Text>
+                     <Text style={styles.infoValue}>{userData.email}</Text>
                   </View>
                </View>
                <View style={styles.infoItem}>
                   <Ionicons name="call" size={20} color="#3498db" />
                   <View style={styles.infoContent}>
                      <Text style={styles.infoLabel}>Telefone</Text>
-                     <Text style={styles.infoValue}>(11) 99999-9999</Text>
+                     <Text style={styles.infoValue}>{userData.telefone || 'Não informado'}</Text>
                   </View>
                </View>
             </View>
          </View>
+
+         {isAdmin && (
+            <View style={styles.section}>
+               <Text style={styles.sectionTitle}>Administração</Text>
+               <View style={styles.infoCard}>
+                  <TouchableOpacity style={styles.menuItem} onPress={handleUserManagement}>
+                     <Ionicons name="people" size={20} color="#e74c3c" />
+                     <Text style={styles.menuItemText}>Gerenciar Usuários</Text>
+                     <Ionicons name="chevron-forward" size={20} color="#95a5a6" />
+                  </TouchableOpacity>
+               </View>
+            </View>
+         )}
 
          <View style={styles.section}>
             <Text style={styles.sectionTitle}>Preferências</Text>
@@ -90,7 +124,7 @@ const ProfileScreen = () => {
             <Ionicons name="log-out" size={20} color="white" />
             <Text style={styles.logoutButtonText}>Sair</Text>
          </TouchableOpacity>
-      </View>
+      </ScrollView>
    );
 };
 
@@ -98,11 +132,12 @@ const styles = StyleSheet.create({
    container: {
       flex: 1,
       backgroundColor: '#f5f5f5',
-      padding: 16,
    },
    profileHeader: {
       alignItems: 'center',
       marginBottom: 24,
+      marginTop: 16,
+      paddingHorizontal: 16,
    },
    avatarContainer: {
       width: 100,
@@ -130,6 +165,7 @@ const styles = StyleSheet.create({
    },
    section: {
       marginBottom: 24,
+      paddingHorizontal: 16,
    },
    sectionTitle: {
       fontSize: 18,
@@ -188,6 +224,8 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       justifyContent: 'center',
       marginTop: 16,
+      marginHorizontal: 16,
+      marginBottom: 32,
    },
    logoutButtonText: {
       color: 'white',

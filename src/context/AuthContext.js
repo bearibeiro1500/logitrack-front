@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { login as authLogin } from '../services/authService';
 
 const AuthContext = createContext({});
 
@@ -7,18 +8,12 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const signIn = async (email, password) => {
+  const signIn = async (response) => {
     try {
       setLoading(true);
-      // Mock de autenticação - substituir pela chamada real da API
-      if (email === 'admin@logitrack.com' && password === 'admin123') {
-        const mockUser = {
-          id: 1,
-          email: 'admin@logitrack.com',
-          name: 'Administrador',
-        };
-        await AsyncStorage.setItem('@LogiTrack:user', JSON.stringify(mockUser));
-        setUser(mockUser);
+      // Usa os dados já vindos do serviço de autenticação
+      if (response && response.user) {
+        setUser(response.user);
         return true;
       }
       return false;
@@ -31,7 +26,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
-    await AsyncStorage.removeItem('@LogiTrack:user');
+    await AsyncStorage.multiRemove(['@LogiTrack:token', '@LogiTrack:user']);
     setUser(null);
   };
 

@@ -11,6 +11,10 @@ import DashboardScreen from './src/screens/DashboardScreen';
 import RobotListScreen from './src/screens/RobotListScreen';
 import RobotDetailScreen from './src/screens/RobotDetailScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import RegisterScreen from './src/screens/RegisterScreen';
+import UserManagementScreen from './src/screens/UserManagementScreen';
+import EditUserScreen from './src/screens/EditUserScreen';
+import RegisterUserScreen from './src/screens/RegisterUserScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -39,7 +43,7 @@ const MainTabNavigator = () => {
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Robôs" component={RobotStackNavigator} options={{ headerShown: false }} />
-      <Tab.Screen name="Perfil" component={ProfileScreen} />
+      <Tab.Screen name="Perfil" component={ProfileStackNavigator} options={{ headerShown: false }} />
     </Tab.Navigator>
   );
 };
@@ -50,6 +54,18 @@ const RobotStackNavigator = () => {
     <Stack.Navigator>
       <Stack.Screen name="Lista de Robôs" component={RobotListScreen} />
       <Stack.Screen name="Detalhes do Robô" component={RobotDetailScreen} />
+    </Stack.Navigator>
+  );
+};
+
+// Stack navigator para perfil e gerenciamento de usuários
+const ProfileStackNavigator = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="ProfileMain" component={ProfileScreen} options={{ title: 'Perfil' }} />
+      <Stack.Screen name="UserManagement" component={UserManagementScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EditUser" component={EditUserScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="RegisterUser" component={RegisterUserScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 };
@@ -76,23 +92,31 @@ export default function App() {
 
   const authContext = React.useMemo(() => ({
     signIn: async (data) => {
-      // Aqui seria a chamada real para a API
-      // Por enquanto, vamos apenas simular um login bem-sucedido
-      const token = 'dummy-auth-token';
+      // data contém o token e informações do usuário vindos do login
       try {
-        await AsyncStorage.setItem('userToken', token);
+        await AsyncStorage.setItem('userToken', data.token);
+        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
       } catch (e) {
-        console.log('Erro ao salvar token', e);
+        console.log('Erro ao salvar dados de autenticação', e);
       }
-      setUserToken(token);
+      setUserToken(data.token);
     },
     signOut: async () => {
       try {
-        await AsyncStorage.removeItem('userToken');
+        await AsyncStorage.multiRemove(['userToken', 'userData']);
       } catch (e) {
-        console.log('Erro ao remover token', e);
+        console.log('Erro ao remover dados de autenticação', e);
       }
       setUserToken(null);
+    },
+    getUserData: async () => {
+      try {
+        const userData = await AsyncStorage.getItem('userData');
+        return userData ? JSON.parse(userData) : null;
+      } catch (e) {
+        console.log('Erro ao obter dados do usuário', e);
+        return null;
+      }
     },
   }), []);
 
